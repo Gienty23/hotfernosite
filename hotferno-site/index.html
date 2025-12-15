@@ -7,151 +7,110 @@
   <style>
     :root{
       --bg:#0b0d10;
-      --bg2:#101318;
+      --bg2:#0f1318;
       --text:#f5f5f5;
       --muted:#a1a1aa;
       --line:rgba(255,255,255,.10);
       --soft:rgba(255,255,255,.06);
-      --max:1200px;
+      --max:1180px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-      background:
-        radial-gradient(900px 600px at 22% 0%, rgba(255,255,255,.08), transparent 55%),
-        linear-gradient(180deg, var(--bg), var(--bg2));
+      background: linear-gradient(180deg, var(--bg), var(--bg2));
       color:var(--text);
       letter-spacing:.2px;
     }
 
+    /* Top minimal bar (optional, can hide on hero) */
     .topbar{
-      position:sticky; top:0; z-index:50;
-      backdrop-filter: blur(10px);
-      background: rgba(10,12,15,.65);
-      border-bottom:1px solid var(--line);
-    }
-    .topbar .inner{
-      max-width:var(--max);
-      margin:0 auto;
+      position:fixed; top:0; left:0; right:0; z-index:50;
+      display:flex; align-items:center; justify-content:space-between;
       padding:14px 18px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:14px;
+      background: rgba(10,12,15,.35);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid rgba(255,255,255,.06);
     }
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      text-decoration:none;
-      color:var(--text);
-      min-width: 220px;
-    }
-    .logoImg{
-      width:28px; height:28px;
-      object-fit:contain;
-      filter: drop-shadow(0 6px 18px rgba(0,0,0,.35));
-    }
-    .brandText{
-      display:flex; flex-direction:column; gap:2px;
-      line-height:1.1;
-    }
-    .brandText .name{
-      font-weight:700;
-      letter-spacing:2.6px;
-      font-size:14px;
-    }
-    .brandText .tag{
-      font-size:11px;
-      color:var(--muted);
-      letter-spacing:1.4px;
-      text-transform:uppercase;
-    }
-
-    .nav{
-      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-    }
-    .nav a{
+    .topbar a{
       color:var(--muted);
       text-decoration:none;
       font-size:12px;
       letter-spacing:1.2px;
       text-transform:uppercase;
-      padding:9px 10px;
+      padding:8px 10px;
       border-radius:999px;
-      transition: all .15s ease;
       border:1px solid transparent;
+      transition:.15s ease;
     }
-    .nav a:hover{color:var(--text); background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.08)}
-    .nav .cta{
+    .topbar a:hover{color:var(--text); background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.08)}
+    .topbar .right{display:flex; gap:10px; align-items:center}
+    .topbar .cta{
       color:var(--text);
       border:1px solid rgba(255,255,255,.18);
       background:rgba(255,255,255,.04);
     }
-    .nav .cta:hover{background:rgba(255,255,255,.08)}
+    .topbar .cta:hover{background:rgba(255,255,255,.08)}
 
+    /* Hero like Gucci: big visual first */
     .hero{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:84px 18px 36px; /* leave space for fixed topbar */
+      position:relative;
+      overflow:hidden;
+    }
+    .hero::before{
+      content:"";
+      position:absolute; inset:-20%;
+      background: radial-gradient(900px 600px at 50% 15%, rgba(255,255,255,.10), transparent 55%);
+      pointer-events:none;
+    }
+    .heroInner{
+      width:100%;
       max-width:var(--max);
-      margin:0 auto;
-      padding:56px 18px 26px;
-      display:grid;
-      grid-template-columns: 1.25fr .75fr;
-      gap:24px;
-      align-items:end;
-    }
-    @media (max-width: 900px){
-      .hero{grid-template-columns:1fr; padding-top:38px}
-      .brand{min-width:auto}
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:18px;
+      position:relative;
     }
 
-    .kicker{
-      color:var(--muted);
-      text-transform:uppercase;
-      letter-spacing:2.6px;
-      font-size:12px;
-      margin-bottom:14px;
-    }
-    h1{
-      margin:0;
-      font-size:56px;
-      letter-spacing:1px;
-      line-height:1.03;
-      font-weight:650;
-    }
-    @media (max-width: 520px){
-      h1{font-size:40px}
-    }
-    .lead{
-      margin:16px 0 0;
-      color:#d4d4d8;
-      font-size:15px;
-      line-height:1.75;
-      max-width:58ch;
+    /* Big logo image */
+    .heroLogo{
+      width:min(860px, 86vw);
+      height:auto;
+      display:block;
+      filter: drop-shadow(0 18px 40px rgba(0,0,0,.55));
+      user-select:none;
+      -webkit-user-drag:none;
     }
 
-    .heroRight{
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:18px;
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
-    }
-    .heroRight .miniTitle{
-      font-size:12px;
+    /* small understated line under hero (Gucci vibe) */
+    .heroMeta{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+      justify-content:center;
+      align-items:center;
       color:var(--muted);
+      font-size:12px;
       letter-spacing:2px;
       text-transform:uppercase;
-      margin:0 0 10px;
+      text-align:center;
     }
-    .heroRight .miniText{
-      margin:0 0 16px;
-      color:#e4e4e7;
-      font-size:14px;
-      line-height:1.7;
-    }
+    .dot{opacity:.5}
 
-    .buttons{display:flex; gap:12px; flex-wrap:wrap}
+    .heroActions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      justify-content:center;
+      margin-top:4px;
+    }
     .btn{
       display:inline-flex; align-items:center; justify-content:center;
       padding:12px 16px;
@@ -164,33 +123,68 @@
       text-transform:uppercase;
       background:rgba(255,255,255,.04);
       transition: all .15s ease;
-      min-width: 170px;
+      min-width: 180px;
     }
     .btn:hover{background:rgba(255,255,255,.08)}
     .btn.primary{
-      background:rgba(255,255,255,.88);
+      background:rgba(255,255,255,.90);
       color:#0b0d10;
       border-color:transparent;
     }
     .btn.primary:hover{filter:brightness(1.03)}
-    .hint{
-      margin-top:10px;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.5;
+
+    /* Scroll cue */
+    .scrollCue{
+      position:absolute;
+      bottom:18px;
+      left:50%;
+      transform:translateX(-50%);
+      color:rgba(255,255,255,.55);
+      font-size:11px;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+    }
+    .scrollLine{
+      width:1px;
+      height:26px;
+      background:rgba(255,255,255,.35);
+      border-radius:999px;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse{
+      0%,100%{opacity:.25; transform:translateY(0)}
+      50%{opacity:.9; transform:translateY(6px)}
     }
 
+    /* Sections */
     .section{
       max-width:var(--max);
       margin:0 auto;
-      padding:22px 18px;
+      padding:54px 18px;
     }
     .divider{border-top:1px solid var(--line)}
+    .h2{
+      margin:0 0 12px;
+      font-size:24px;
+      font-weight:650;
+      letter-spacing:.4px;
+    }
+    .p{
+      margin:0 0 18px;
+      color:#d4d4d8;
+      line-height:1.8;
+      max-width:72ch;
+    }
     .grid{
       display:grid;
       grid-template-columns: repeat(3, 1fr);
       gap:12px;
-      padding-top:18px;
+      margin-top:18px;
     }
     @media (max-width: 900px){
       .grid{grid-template-columns:1fr}
@@ -201,102 +195,116 @@
       padding:18px;
       background: rgba(255,255,255,.02);
     }
-    .card h3{
+    .cardTitle{
       margin:0 0 8px;
       font-size:13px;
-      letter-spacing:1.6px;
+      letter-spacing:1.8px;
       text-transform:uppercase;
+      color:#e4e4e7;
     }
-    .card p{
+    .cardText{
       margin:0;
       color:#d4d4d8;
       font-size:13px;
-      line-height:1.7;
+      line-height:1.75;
     }
 
     footer{
       max-width:var(--max);
       margin:0 auto;
-      padding:26px 18px 40px;
+      padding:22px 18px 44px;
       color:var(--muted);
       font-size:12px;
       display:flex;
       justify-content:space-between;
       gap:16px;
       flex-wrap:wrap;
+      border-top:1px solid var(--line);
     }
     footer a{color:var(--muted); text-decoration:none}
     footer a:hover{color:var(--text)}
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="inner">
-      <a class="brand" href="/">
-        <img class="logoImg" src="/pic/HotfernoLogo.png" alt="Hotferno logo">
-        <div class="brandText">
-          <div class="name">HOTFERNO</div>
-          <div class="tag">Izakaya Fusion Bar · Scarborough</div>
-        </div>
-      </a>
 
-      <nav class="nav">
-        <a href="/menu">Menu</a>
-        <a href="/about">About</a>
-        <a href="/visit">Visit</a>
-        <a class="cta" href="/game">Play</a>
-      </nav>
+  <div class="topbar">
+    <a href="/" style="letter-spacing:2px;color:#e4e4e7;">HOTFERNO</a>
+    <div class="right">
+      <a href="#about">About</a>
+      <a href="#visit">Visit</a>
+      <a class="cta" href="/game">Play</a>
     </div>
   </div>
 
-  <main>
-    <section class="hero">
-      <div>
-        <div class="kicker">Izakaya · Fusion · Late Night</div>
-        <h1>Minimal design.<br/>Maximum flavor.</h1>
-        <p class="lead">
-          Hotferno is an Izakaya Fusion Bar in Scarborough — bold plates, late-night bites, and a clean, modern vibe.
-          Play our mini game and unlock a redeem code for in-store rewards.
-        </p>
+  <!-- HERO: big logo first -->
+  <section class="hero">
+    <div class="heroInner">
+      <!-- Replace with your big logo image -->
+      <img class="heroLogo" src="/pic/HotfernoLogo.png" alt="Hotferno">
+
+      <div class="heroMeta">
+        <span>Izakaya Fusion Bar</span><span class="dot">•</span>
+        <span>Scarborough, ON</span><span class="dot">•</span>
+        <span>Late Night</span>
       </div>
 
-      <div class="heroRight">
-        <p class="miniTitle">Limited-time</p>
-        <p class="miniText">
-          Beat Level 2 to generate a redeem code.
-          Show it in-store to claim your reward.
-        </p>
-        <div class="buttons">
-          <a class="btn primary" href="/game">Play the Game</a>
-          <a class="btn" href="/leaderboard">Leaderboard</a>
-        </div>
-        <div class="hint">Works on mobile & desktop · No download</div>
+      <div class="heroActions">
+        <a class="btn primary" href="/game">Play the Game</a>
+        <a class="btn" href="#about">Explore</a>
       </div>
-    </section>
+    </div>
 
-    <div class="section divider"></div>
+    <div class="scrollCue">
+      <div class="scrollLine"></div>
+      <div>Scroll</div>
+    </div>
+  </section>
 
-    <section class="section">
-      <div class="grid">
-        <div class="card">
-          <h3>Food</h3>
-          <p>Izakaya-style share plates with a fusion twist — spicy, savory, and made for groups.</p>
-        </div>
-        <div class="card">
-          <h3>Bar</h3>
-          <p>Curated drinks and a sleek atmosphere — perfect for nights out in Scarborough.</p>
-        </div>
-        <div class="card">
-          <h3>Game Night</h3>
-          <p>Seasonal mini-games and rewards. Beat the challenge → get a code → redeem in minutes.</p>
-        </div>
+  <!-- CONTENT -->
+  <div class="divider"></div>
+
+  <section class="section" id="about">
+    <h2 class="h2">A clean space. A bold menu.</h2>
+    <p class="p">
+      Hotferno is an Izakaya Fusion Bar in Scarborough — designed for friends, heat, and late-night bites.
+      We keep the atmosphere minimal and the flavors loud.
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <h3 class="cardTitle">Food</h3>
+        <p class="cardText">Izakaya-style share plates with a fusion twist — spicy, savory, made for groups.</p>
       </div>
-    </section>
+      <div class="card">
+        <h3 class="cardTitle">Bar</h3>
+        <p class="cardText">Curated drinks and a sleek vibe — the perfect night-out spot in Scarborough.</p>
+      </div>
+      <div class="card">
+        <h3 class="cardTitle">Game Night</h3>
+        <p class="cardText">Beat Level 2 to unlock a redeem code. Show it in-store and claim your reward.</p>
+      </div>
+    </div>
+  </section>
 
-    <footer class="divider">
-      <div>© 2025 Hotferno · Scarborough, ON</div>
-      <div><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></div>
-    </footer>
-  </main>
+  <section class="section divider" id="visit" style="padding-top:46px;">
+    <h2 class="h2">Visit</h2>
+    <p class="p">
+      Scarborough, ON · <span style="color:var(--muted)">Hours & address coming soon.</span><br/>
+      For now, tap <b>Play</b> to join the challenge and win in-store treats.
+    </p>
+    <div class="heroActions" style="justify-content:flex-start;">
+      <a class="btn primary" href="/game">Play the Game</a>
+      <a class="btn" href="mailto:hello@hotferno.ca">Email Us</a>
+    </div>
+  </section>
+
+  <footer>
+    <div>© 2025 Hotferno · Scarborough, ON</div>
+    <div>
+      <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a>
+    </div>
+  </footer>
+
 </body>
 </html>
+
