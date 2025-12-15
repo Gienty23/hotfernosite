@@ -1,1 +1,663 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>HOTFERNO Mini Game (Test)</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#121b2f;
+      --card2:#0f172a;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --accent:#f97316;
+      --danger:#ef4444;
+      --ok:#22c55e;
+      --border:rgba(255,255,255,.10);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; padding:16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(900px 500px at 30% 0%, #1f2a44 0%, var(--bg) 60%);
+      color:var(--text);
+    }
+    .wrap{max-width:1100px;margin:0 auto;display:grid;gap:12px}
+    .top{
+      display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+      padding:12px; border:1px solid var(--border); border-radius:14px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    }
+    .top h1{font-size:16px;margin:0 12px 0 0;color:#fff;letter-spacing:.5px}
+    .btn{
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      color:var(--text);
+      padding:8px 12px; border-radius:12px;
+      cursor:pointer;
+      transition:transform .05s ease;
+      user-select:none;
+    }
+    .btn:hover{border-color:rgba(255,255,255,.18)}
+    .btn:active{transform:scale(.98)}
+    .btn.primary{background:rgba(249,115,22,.14); border-color:rgba(249,115,22,.35)}
+    .pill{
+      padding:6px 10px;border-radius:999px;border:1px solid var(--border);
+      background:rgba(255,255,255,.04); color:var(--muted); font-size:12px;
+    }
+    .pill b{color:#fff}
+    .grid{
+      display:grid; gap:12px;
+      grid-template-columns: 1.2fr .8fr;
+    }
+    @media (max-width: 900px){
+      .grid{grid-template-columns: 1fr}
+    }
+
+    .boardCard, .sideCard{
+      border:1px solid var(--border);
+      border-radius:16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      overflow:hidden;
+    }
+    .cardHeader{
+      padding:12px 14px;
+      display:flex; justify-content:space-between; align-items:center; gap:8px;
+      border-bottom:1px solid var(--border);
+      background:rgba(0,0,0,.12);
+    }
+    .cardHeader .title{font-weight:700}
+    .cardHeader .sub{color:var(--muted); font-size:12px}
+
+    /* board */
+    .board{
+      position:relative;
+      width:100%;
+      aspect-ratio: 16/10;
+      min-height: 360px;
+
+      /* background image + dark overlay */
+      background:
+        linear-gradient(180deg, rgba(10,15,25,.82), rgba(10,15,25,.92)),
+        url("/pic/shaoniao.jpg");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    /* frosted layer */
+    .board::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: rgba(0,0,0,.18);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      pointer-events:none;
+      z-index: 1;
+    }
+
+    .tile{
+      position:absolute;
+      width:58px;
+      height:58px;
+      border-radius:14px;
+
+      /* Mahjong-like solid piece (opaque) */
+      background: #f8fafc;
+      border: 1px solid rgba(255,255,255,.55);
+
+      /* subtle 3D rim */
+      box-shadow:
+        0 10px 18px rgba(0,0,0,.38),
+        inset 0 0 0 2px rgba(16,185,129,.35),   /* green edge hint */
+        inset 0 -10px 18px rgba(0,0,0,.10);
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      cursor:pointer;
+      user-select:none;
+      -webkit-user-drag:none;
+      overflow:hidden;
+      opacity:1;
+    }
+    .tile::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:14px;
+      /* top highlight */
+      background: linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,0) 55%);
+      pointer-events:none;
+      opacity:.55;
+    }
+    .tile .icon{
+      position:relative;
+      z-index:2;
+      font-size:30px;
+      line-height:1;
+      transform: translateY(-1px);
+      text-shadow: 0 2px 0 rgba(0,0,0,.10);
+    }
+    .tile.disabled{
+      opacity:1;            /* keep fully opaque like 羊了个羊 */
+      cursor:not-allowed;
+      filter:none;          /* do not gray out */
+    }
+
+    /* tray */
+    .trayWrap{padding:12px 14px; display:grid; gap:10px}
+    .tray{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap:8px;
+    }
+    .slot{
+      height:56px; border-radius:14px;
+      border:1px dashed rgba(255,255,255,.20);
+      background: rgba(255,255,255,.03);
+      display:flex; align-items:center; justify-content:center;
+      font-size:22px; position:relative;
+    }
+    .slot.filled{
+      border-style:solid;
+      background: rgba(255,255,255,.06);
+    }
+    .note{color:var(--muted);font-size:12px;line-height:1.5}
+    .log{
+      padding:10px 12px; border-radius:14px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.15);
+      color: var(--muted);
+      font-size:12px;
+      min-height: 56px;
+    }
+    .log b{color:#fff}
+    .status{
+      display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+      padding:12px 14px;
+      border-top:1px solid var(--border);
+      background: rgba(0,0,0,.10);
+    }
+    .status .msg{flex:1;color:var(--muted); font-size:13px}
+    .status .msg strong{color:#fff}
+    .badge{
+      padding:6px 10px; border-radius:999px; font-size:12px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+    }
+    .badge.ok{border-color:rgba(34,197,94,.4); background:rgba(34,197,94,.10)}
+    .badge.danger{border-color:rgba(239,68,68,.4); background:rgba(239,68,68,.10)}
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      padding:2px 6px; border-radius:8px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      color:#fff; font-size:12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>HOTFERNO Mini Game</h1>
+      <button class="btn primary" id="btnL1">Start</button>      <button class="btn" id="btnRestart">重开本关</button>
+      <span class="pill">规则：点牌进槽，<b>同图标 3 个</b>自动消除；槽最多 <b>7</b> 格，满了就失败</span>
+      <span class="pill">快捷键：<span class="kbd">R</span> 重开</span>
+    </div>
+
+    <div class="grid">
+      <div class="boardCard">
+        <div class="cardHeader">
+          <div>
+            <div class="title" id="levelTitle">Not started</div>
+            <div class="sub" id="levelSub">Click Start to begin</div>
+          </div>
+          <div class="pill">剩余：<b id="remainCount">0</b></div>
+        </div>
+        <div class="board" id="board"></div>
+        <div class="status">
+          <div class="msg" id="msg">Ready.</div>
+          <div class="badge" id="badge">—</div>
+        </div>
+      </div>
+
+      <div class="sideCard">
+        <div class="cardHeader">
+          <div>
+            <div class="title">暂存槽</div>
+            <div class="sub">满 7 格且无法消除就失败</div>
+          </div>
+          <div class="pill">槽位：<b id="trayCount">0</b>/7</div>
+        </div>
+
+        <div class="trayWrap">
+          <div class="tray" id="tray"></div>
+          <div class="log" id="log">
+            提示：Level 2 is intentionally brutal — you’ll often be one tile short.
+          </div>
+          <div class="note">
+            说明：本地版已换成日式风格 emoji 做占位（🍢🏮🗻🍶🍺🍜🍙🌸⛩️🔥🥢🍱）。<br/>
+            之后上线再换成你的品牌图标/食物图标，并接“兑换码+排行榜”后端。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const ICONS = ["🍢","🏮","🗻","🍶","🍺","🍜","🍙","🌸","⛩️","🔥","🥢","🍱"];
+  const boardEl = document.getElementById("board");
+  const trayEl = document.getElementById("tray");
+  const logEl = document.getElementById("log");
+  const msgEl = document.getElementById("msg");
+  const badgeEl = document.getElementById("badge");
+  const remainEl = document.getElementById("remainCount");
+  const trayCountEl = document.getElementById("trayCount");
+  const levelTitleEl = document.getElementById("levelTitle");
+  const levelSubEl = document.getElementById("levelSub");
+
+  const btnL1 = document.getElementById("btnL1");  const btnRestart = document.getElementById("btnRestart");
+
+  // ====== 游戏状态 ======
+  let state = {
+    level: 0,
+    types: 6,
+    gridW: 10,
+    gridH: 6,
+    // stacks[x][y] = [tileId... bottom->top]
+    stacks: [],
+    tiles: new Map(), // id -> {id,type,x,y,z,removed}
+    tray: [], // tileId list in order
+    playing: false,
+    result: null, // "win" | "lose" | null
+  };
+
+  function setBadge(kind, text){
+    badgeEl.className = "badge" + (kind ? (" " + kind) : "");
+    badgeEl.textContent = text;
+  }
+  function setMsg(html){
+    msgEl.innerHTML = html;
+  }
+  function log(html){
+    logEl.innerHTML = html;
+  }
+
+  function initTrayUI(){
+    trayEl.innerHTML = "";
+    for(let i=0;i<7;i++){
+      const slot = document.createElement("div");
+      slot.className = "slot";
+      slot.dataset.idx = i;
+      trayEl.appendChild(slot);
+    }
+    renderTray();
+  }
+
+  function renderTray(){
+    const slots = trayEl.querySelectorAll(".slot");
+    slots.forEach((s,i)=>{
+      const tileId = state.tray[i];
+      if(tileId == null){
+        s.classList.remove("filled");
+        s.textContent = "";
+      } else {
+        s.classList.add("filled");
+        const t = state.tiles.get(tileId);
+        s.textContent = ICONS[t.type];
+      }
+    });
+    trayCountEl.textContent = `${state.tray.length}/7`;
+  }
+
+  function createEmptyStacks(){
+    state.stacks = Array.from({length: state.gridW}, () =>
+      Array.from({length: state.gridH}, () => [])
+    );
+  }
+
+  // ====== 关卡生成（原创规则：只是“像”，不是复刻） ======
+  // 简化：每个格子是一个“叠堆”，只能点最顶层（更像“遮挡”）
+  // Level 1: 4 types, 24 tiles, stack depth <=2
+  // Level 2: 6 types, 54 tiles, stack depth <=4, trap distribution
+  function startLevel(level){
+    state.level = level;
+    state.result = null;
+    state.playing = true;
+    state.tray = [];
+    state.tiles = new Map();
+    createEmptyStacks();
+
+    const cfg = (level === 1)
+      ? { types: 4, total: 24,  maxDepth: 2, label: "Level 1 (Easy)", sub:"Few tiles, light blocking — you should clear it." }
+      : { types: 12, total: 120, maxDepth: 6, label: "Level 2 (Brutal)", sub:"More types, deeper stacks, trap distribution — extremely hard." };
+
+    state.types = cfg.types;
+
+    levelTitleEl.textContent = cfg.label;
+    levelSubEl.textContent = cfg.sub;
+
+    initTrayUI();
+    generateTiles(cfg);
+    renderBoard();
+
+    setBadge("", "进行中");
+    setMsg(`Playing <strong>${cfg.label}</strong>. Tap a top tile to move it to the tray. <strong>3 of the same icon</strong> clears automatically.`);
+    log(`提示：如果你想让第2关更难，后面我们可以把槽从 7 改到 6（但建议先用 7）。`);
+    updateRemain();
+  }
+
+  function generateTiles(cfg){
+    // 让 total 一定是 3 的倍数（消除规则需要）
+    let total = cfg.total - (cfg.total % 3);
+    if(total < 12) total = 12;
+
+    // 1) 先生成 type 序列（每种出现次数是 3 的倍数）
+    // Level 1：均匀分配
+    // Level 2：做“陷阱”：某两种类型在顶层很少出现，第三个会埋得很深
+    const typeCounts = new Array(cfg.types).fill(0);
+
+    if(state.level === 1){
+      // 均匀
+      for(let i=0;i<total;i++){
+        typeCounts[i % cfg.types]++;
+      }
+    } else {
+      // 陷阱：让 0 和 1 类型更“阴险”
+      // 大致分布：两种类型更偏底层出现
+      // 先均匀
+      for(let i=0;i<total;i++) typeCounts[i % cfg.types]++;
+      // 调整：把一些数量从 0/1 挪到其他类型（保持总数不变）
+      // 目的：让 0/1 在“可点击的早期”更难凑齐
+      // （这里用“埋深策略”来实现，数量仍保持可消）
+    }
+
+    // 2) 创建 tile 列表（先按类型填充）
+    const tileList = [];
+    for(let type=0; type<cfg.types; type++){
+      // 把 counts 调成 3 的倍数
+      const c = typeCounts[type] - (typeCounts[type] % 3);
+      typeCounts[type] = c;
+      for(let k=0;k<c;k++) tileList.push(type);
+    }
+
+    // 如果因为取整导致少了，补到 total（依然保证 3 的倍数）
+    while(tileList.length < total){
+      const type = tileList.length % cfg.types;
+      // 一次补3个
+      tileList.push(type, type, type);
+    }
+    tileList.length = total;
+
+    // 打乱
+    shuffle(tileList);
+
+    // 3) 把 tiles 放到 stacks 里
+    // 位置策略：
+    // - Level 1：随机撒在更多格子上，深度浅
+    // - Level 2：集中在较少格子上，深度深（更容易卡槽）
+    const cells = [];
+    for(let x=0;x<state.gridW;x++){
+      for(let y=0;y<state.gridH;y++){
+        cells.push([x,y]);
+      }
+    }
+    shuffle(cells);
+
+    const useCellCount = (state.level === 1) ? Math.floor(cells.length * 0.75) : Math.floor(cells.length * 0.45);
+    const activeCells = cells.slice(0, useCellCount);
+
+    let idSeq = 1;
+
+    if(state.level === 2){
+      // Level 2 埋深策略：
+      // - type 0/1：尽量放在更深层（先把其他类型填到浅层）
+      const t01 = tileList.filter(t => t===0 || t===1);
+      const others = tileList.filter(t => t!==0 && t!==1);
+      shuffle(t01); shuffle(others);
+
+      // 先铺浅层：others 优先
+      let idxOthers = 0, idxT01 = 0;
+
+      // 目标：尽量让前 ~40% 的“顶层牌”很少出现 0/1
+      // 做法：先把每个 cell 的第 1 层用 others 填满，再开始塞 t01 到更深
+      // 实际实现：循环放牌，优先选择“尚未达到 maxDepth 的 cell”，并按当前深度排序
+      const allTypes = {others, t01};
+      const totalN = tileList.length;
+
+      for(let n=0;n<totalN;n++){
+        // 选一个 cell：优先浅的
+        const candidate = activeCells
+          .filter(([x,y]) => state.stacks[x][y].length < cfg.maxDepth);
+        candidate.sort((a,b)=> state.stacks[a[0]][a[1]].length - state.stacks[b[0]][b[1]].length);
+        const [cx,cy] = candidate[Math.floor(Math.random() * Math.min(candidate.length, 10))];
+
+        const depth = state.stacks[cx][cy].length;
+
+        let type;
+        // depth 0/1 优先用 others
+        if(depth <= 1){
+          if(idxOthers < others.length) type = others[idxOthers++];
+          else type = t01[idxT01++]; // 万一不够了
+        } else {
+          // 深层更容易放 t01
+          if(idxT01 < t01.length && Math.random() < 0.65) type = t01[idxT01++];
+          else type = (idxOthers < others.length) ? others[idxOthers++] : t01[idxT01++];
+        }
+
+        const tid = idSeq++;
+        const z = depth; // 0 bottom
+        state.tiles.set(tid, {id: tid, type, x: cx, y: cy, z, removed:false});
+        state.stacks[cx][cy].push(tid);
+      }
+    } else {
+      // Level 1：普通随机堆叠
+      for(const type of tileList){
+        const candidates = activeCells.filter(([x,y]) => state.stacks[x][y].length < cfg.maxDepth);
+        const [cx,cy] = candidates[Math.floor(Math.random() * candidates.length)];
+        const depth = state.stacks[cx][cy].length;
+        const tid = idSeq++;
+        state.tiles.set(tid, {id: tid, type, x: cx, y: cy, z: depth, removed:false});
+        state.stacks[cx][cy].push(tid);
+      }
+    }
+  }
+
+  // ====== 渲染 ======
+  function renderBoard(){
+    boardEl.innerHTML = "";
+
+    const rect = boardEl.getBoundingClientRect();
+    const bw = rect.width;
+    const bh = rect.height;
+
+    const paddingX = 22;
+    const paddingY = 22;
+
+    // 格子间距：让牌看起来分布合理
+    const cellW = (bw - paddingX*2) / state.gridW;
+    const cellH = (bh - paddingY*2) / state.gridH;
+
+    // 画每个格子的“顶层牌”（所有层都会渲染，但只有顶层可点）
+    for(let x=0;x<state.gridW;x++){
+      for(let y=0;y<state.gridH;y++){
+        const stack = state.stacks[x][y];
+        if(stack.length === 0) continue;
+
+        // 按层渲染（底->顶），做个“叠层偏移”视觉
+        for(let i=0;i<stack.length;i++){
+          const tid = stack[i];
+          const t = state.tiles.get(tid);
+          if(!t || t.removed) continue;
+
+          const div = document.createElement("div");
+          div.className = "tile";
+          div.dataset.id = String(tid);
+
+          // 位置：格子中心 + 叠层偏移
+          const baseX = paddingX + x*cellW + cellW*0.5;
+          const baseY = paddingY + y*cellH + cellH*0.5;
+
+          // 叠层偏移：越高越往右上，增强遮挡感
+          const offset = i * 6;
+          const left = baseX - 32 + offset;
+          const top  = baseY - 32 - offset;
+
+          div.style.left = `${left}px`;
+          div.style.top = `${top}px`;
+          div.style.zIndex = String(10 + i);
+
+          div.textContent = ICONS[t.type];
+          const isTop = (i === stack.length - 1);
+          if(!isTop || !state.playing){
+            div.classList.add("disabled");
+          } else {
+            div.addEventListener("click", () => onPick(tid), {passive:true});
+          }
+
+          boardEl.appendChild(div);
+        }
+      }
+    }
+
+    updateRemain();
+  }
+
+  function updateRemain(){
+    let remain = 0;
+    for(const t of state.tiles.values()){
+      if(!t.removed) remain++;
+    }
+    remainEl.textContent = String(remain);
+    if(state.playing && remain === 0 && state.tray.length === 0){
+      win();
+    }
+  }
+
+  // ====== 交互与规则 ======
+  function onPick(tileId){
+    if(!state.playing) return;
+    if(state.tray.length >= 7){
+      lose("暂存槽已满，无法继续放入。");
+      return;
+    }
+
+    const t = state.tiles.get(tileId);
+    if(!t || t.removed) return;
+
+    // 必须是该格子顶层
+    const stack = state.stacks[t.x][t.y];
+    const topId = stack[stack.length - 1];
+    if(topId !== tileId) return;
+
+    // 从 stack 弹出
+    stack.pop();
+    t.removed = true;
+
+    // 放入 tray
+    state.tray.push(tileId);
+    renderTray();
+
+    // 处理消除：同类型 3 个
+    const type = t.type;
+    const idxs = [];
+    for(let i=0;i<state.tray.length;i++){
+      const tid = state.tray[i];
+      const tt = state.tiles.get(tid);
+      if(tt && tt.type === type) idxs.push(i);
+    }
+    if(idxs.length >= 3){
+      // 删除最早的 3 个（更符合“手感”）
+      const toRemove = idxs.slice(0,3).sort((a,b)=>b-a);
+      for(const idx of toRemove){
+        state.tray.splice(idx,1);
+      }
+      renderTray();
+      setMsg(`消除了 <strong>${ICONS[type]}</strong> × 3！继续！`);
+      setBadge("ok", "连消 +1");
+    } else {
+      setMsg(`已放入 <strong>${ICONS[type]}</strong>。凑齐 3 个即可消除。`);
+      setBadge("", "进行中");
+    }
+
+    // 失败判定：槽满且无法再产生消除的情况下（这里简化为：槽满立即失败）
+    if(state.tray.length >= 7){
+      lose("暂存槽满 7 格，挑战失败。");
+      return;
+    }
+
+    // 重新渲染可点状态
+    renderBoard();
+  }
+
+  function win(){
+    state.playing = false;
+    state.result = "win";
+    setBadge("ok", "Cleared");
+
+    // Level 1 -> proceed to Level 2 (no level selection)
+    if(state.level === 1){
+      setMsg(`🎉 <strong>Level 1 cleared!</strong><br/>
+        <button class="btn primary" id="btnNext" style="margin-top:10px;">Continue to Level 2</button>
+      `);
+      log(`<b>Nice.</b> Level 2 is where it gets brutal. Good luck.`);
+      renderBoard();
+
+      setTimeout(()=>{
+        const btnNext = document.getElementById("btnNext");
+        if(btnNext){
+          btnNext.addEventListener("click", ()=> startLevel(2));
+        } else {
+          setTimeout(()=> startLevel(2), 1500);
+        }
+      }, 0);
+      return;
+    }
+
+    // Level 2 -> final win
+    setMsg(`🏆 <strong>Level 2 cleared!</strong><br/>Show this win screen in-store to claim your reward (testing).`);
+    log(`<b>Next (production)</b>: ask for nickname → generate redeem code → leaderboard → staff redemption page.`);
+    renderBoard();
+  }
+
+  function lose(reason){
+    state.playing = false;
+    state.result = "lose";
+    setBadge("danger", "失败");
+    setMsg(`😵 <strong>失败：</strong>${reason} 点击“重开本关”再来。`);
+    log(`<b>失败原因</b>：${reason}<br/>第2关的“陷阱分布”会让你经常差一个凑不齐，这是正常的。`);
+    renderBoard();
+  }
+
+  // ====== 工具 ======
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  // ====== 事件绑定 ======
+  btnL1.addEventListener("click", ()=> startLevel(1));
+btnRestart.addEventListener("click", ()=> {
+    if(state.level === 2) startLevel(2);
+    else startLevel(1);
+  });window.addEventListener("keydown", (e)=>{
+    if(e.key.toLowerCase()==="r"){
+      btnRestart.click();
+    }
+  });
+
+  // 初始化 UI
+  initTrayUI();
+  setBadge("", "—");
+})();
+</script>
+</body>
+</html>
 
